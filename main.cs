@@ -77,6 +77,9 @@ namespace ConsoleApp35
         Vector128<sbyte> _0 = Sse2.SetAllVector128((sbyte)'\0');
 
         Vector128<sbyte> maskMove0 = Sse2.SetVector128(-1, -1, -1, -1, -1, -1, -1, -1, 14, 12, 10, 8, 6, 4, 2, 0);
+       
+        //sjis対応版?
+       // Vector128<sbyte> maskMove0 = Sse2.SetVector128(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1 ,0);
 
         unsafe int GetControlIndexSIMD(sbyte* c)
         {
