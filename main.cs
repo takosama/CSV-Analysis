@@ -7,7 +7,7 @@ namespace ConsoleApp35
 {
     public unsafe class MyStr
     {
-        volatile string str = "aaaa,123,1234,bbbbbbbbbbbbbbbbbbbasdaadsaf0010bbbbbbbbbbbbbbbbbbbbbasdaadsあｓｄｆｇｈｊｋｌ；af0010bb,0\r\naaaab,1234,12345,abbbb,1\n";
+        volatile string str = "ああaaaa,123,1234,bbbbbbbbbbbbbbbbbbbasdaadsaf0010bbbbbbbbbbbbbbbbbbbbbasdaadsあｓｄｆｇｈｊｋｌ；af0010bb,0\r\naaaab,1234,12345,abbbb,1\n";
 
         //index が入るはずの配列
         volatile int[] tmp = new int[100];
@@ -57,15 +57,16 @@ namespace ConsoleApp35
             {
                 int index = 0;
                 int i = 0;
+                sbyte* pp =(sbyte*) p;
                 while (true)
                 {
-                    int cnt = GetControlIndexSIMD(p+index);
+                    int cnt = GetControlIndexSIMD(pp + index);
                     if (cnt == -1)
                         break;
-                    index += cnt;
-                    tmp[i] = index;
+                    index += cnt*2;
+                    tmp[i] = index/2;
                     i++;
-                    index++;
+                    index+=2;
                 }
             }
         }
@@ -78,11 +79,11 @@ namespace ConsoleApp35
         Vector128<sbyte> maskMove0 = Sse2.SetVector128(-1, -1, -1, -1, -1, -1, -1, -1, 14, 12, 10, 8, 6, 4, 2, 0);
 
 
-        unsafe int GetControlIndexSIMD(char* c)
+        unsafe int GetControlIndexSIMD(sbyte* c)
         {
             int cnt = 0;
             start:
-            var str = Sse2.LoadVector128((sbyte*)c);
+            var str = Sse2.LoadVector128(c);
 
 
             //sjis対応版時はここをコメントアウト
@@ -99,8 +100,8 @@ namespace ConsoleApp35
             //sjis対応版時
             //if (n > 16) n = 16;
             if (n > 8) n = 8;
-           
-          int m = Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
+
+            int m = Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
 
             if (m < n)
                 return -1;
@@ -111,11 +112,11 @@ namespace ConsoleApp35
                 //cnt += 16;
                 //c+=16;
                 cnt += 8;
-                c += 8;
+                c += 16;
                 goto start;
             }
 
-            return cnt +(int) n;
+            return cnt + (int)n;
         }
     }
 
@@ -128,12 +129,14 @@ namespace ConsoleApp35
         unsafe static void Main(string[] args)
         {
 
-      //  BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
+        BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
 
 
-            new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
+//            new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
             //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
-            　
+            //普通140ns simd11ns  i7 4210
+            //普通135ns simd10ns  i5 7200
+
 
 
             Console.ReadLine();
