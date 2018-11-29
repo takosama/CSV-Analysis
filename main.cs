@@ -60,13 +60,13 @@ namespace ConsoleApp35
                 sbyte* pp =(sbyte*) p;
                 while (true)
                 {
-                    int cnt = GetControlIndexSIMD(pp + index);
+                    int cnt = GetControlIndexSIMD(pp + index*2);
                     if (cnt == -1)
                         break;
-                    index += cnt*2;
-                    tmp[i] = index/2;
+                    index += cnt;
+                    tmp[i] = index;
                     i++;
-                    index+=2;
+                    index++;
                 }
             }
         }
@@ -129,10 +129,10 @@ namespace ConsoleApp35
         unsafe static void Main(string[] args)
         {
 
-        BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
+       BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
 
 
-//            new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
+       //    new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
             //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
             //普通140ns simd11ns  i7 4210
             //普通135ns simd10ns  i5 7200
