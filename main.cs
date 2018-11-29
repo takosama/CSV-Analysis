@@ -72,12 +72,12 @@ namespace ConsoleApp35
         Vector128<sbyte> _0 = Sse2.SetAllVector128((sbyte)'\0');
 
         Vector128<sbyte> maskMove0 = Sse2.SetVector128(-1, -1, -1, -1, -1, -1, -1, -1, 14, 12, 10, 8, 6, 4, 2, 0);
-        Vector128<sbyte> maskMove1 = Sse2.SetVector128( 14, 12, 10, 8, 6, 4, 2, 0, -1, -1, -1, -1, -1, -1, -1, -1);
+        Vector128<sbyte> maskMove1 = Sse2.SetVector128(14, 12, 10, 8, 6, 4, 2, 0, -1, -1, -1, -1, -1, -1, -1, -1);
         //24ns
         unsafe int GetControlIndexSIMD(sbyte* c)
         {
             int cnt = 0;
-            start:
+        start:
             var str = Sse2.LoadVector128(c);
 
             str = Ssse3.Shuffle(str, maskMove0);
@@ -96,12 +96,12 @@ namespace ConsoleApp35
 
             if (mask == 0)
             {
-                cnt+=8;
+                cnt += 8;
                 c += 8;
                 goto start;
             }
 
-            return cnt  + n;
+            return cnt + n;
         }
     }
 
@@ -114,12 +114,13 @@ namespace ConsoleApp35
         unsafe static void Main(string[] args)
         {
 
-             BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
+            BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
 
 
             //new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
-          //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
-            //普通14ns simd11ns
+            //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
+            //普通140ns simd11ns  i7 4210
+            //普通135ns simd10ns  i5 7200
 
 
 
