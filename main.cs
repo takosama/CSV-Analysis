@@ -7,12 +7,6 @@ namespace ConsoleApp35
 {
     public unsafe class MyStr
     {
-
-        public MyStr()
-        {
-            uint* arr = stackalloc uint[4];
-        }
-
         volatile string str = "aaaa,123,1234,bbbbbbbbbbbbbbbbbbbasdaadsaf0010bb,0\r\naaaab,1234,12345,abbbb,1\n";
         volatile int[] tmp = new int[100];
         //99
