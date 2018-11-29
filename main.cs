@@ -7,7 +7,7 @@ namespace ConsoleApp35
 {
     public unsafe class MyStr
     {
-        volatile string str = "aaaa,123,1234,bbbbbbbbbbbbbbbbbbbasdaadsaf0010bb,0\r\naaaab,1234,12345,abbbb,1\n";
+        volatile string str = "aaaa,123,1234,bbbbbbbbbbbbbbbbbbbasdaadsaf0010bbbbbbbbbbbbbbbbbbbbbasdaadsaf0010bb,0\r\naaaab,1234,12345,abbbb,1\n";
         volatile int[] tmp = new int[100];
         //99
         [BenchmarkDotNet.Attributes.Benchmark]
@@ -34,11 +34,12 @@ namespace ConsoleApp35
             var span = str.AsSpan();
             fixed (char* p = &span.GetPinnableReference())
             {
+                sbyte* pp = (sbyte*)p;
                 int index = 0;
                 int i = 0;
                 while (true)
                 {
-                    int cnt = GetControlIndexSIMD(p + index);
+                    int cnt = GetControlIndexSIMD(pp + index);
                     if (cnt == -1)
                         break;
                     index += cnt;
@@ -48,7 +49,7 @@ namespace ConsoleApp35
                 }
             }
         }
-        
+
 
 
         unsafe int GetControlIndex(ReadOnlySpan<char> c, int index)
@@ -71,12 +72,13 @@ namespace ConsoleApp35
         Vector128<sbyte> _0 = Sse2.SetAllVector128((sbyte)'\0');
 
         Vector128<sbyte> maskMove0 = Sse2.SetVector128(-1, -1, -1, -1, -1, -1, -1, -1, 14, 12, 10, 8, 6, 4, 2, 0);
+        Vector128<sbyte> maskMove1 = Sse2.SetVector128( 14, 12, 10, 8, 6, 4, 2, 0, -1, -1, -1, -1, -1, -1, -1, -1);
         //24ns
-        unsafe int GetControlIndexSIMD(char* c)
+        unsafe int GetControlIndexSIMD(sbyte* c)
         {
             int cnt = 0;
-        start:
-            var str = Sse2.LoadVector128((sbyte*)c);
+            start:
+            var str = Sse2.LoadVector128(c);
 
             str = Ssse3.Shuffle(str, maskMove0);
 
@@ -85,20 +87,21 @@ namespace ConsoleApp35
             var mask = Sse2.MoveMask(position);
             var mask0 = Sse2.MoveMask(Sse2.CompareEqual(str, _0));
 
-            int n = System.Runtime.Intrinsics.X86.Popcnt.PopCount((uint)((~mask) & (mask - 1)));
+            int n = Popcnt.PopCount((uint)((~mask) & (mask - 1)));
             if (n > 8) n = 8;
-            int m = System.Runtime.Intrinsics.X86.Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
+            int m = Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
 
             if (m < n)
                 return -1;
 
             if (mask == 0)
             {
-                cnt++;
-                c += 16;
+                cnt+=8;
+                c += 8;
                 goto start;
             }
-            return cnt * 8 + n;
+
+            return cnt  + n;
         }
     }
 
@@ -106,17 +109,17 @@ namespace ConsoleApp35
     class Program
     {
 
-        
+
 
         unsafe static void Main(string[] args)
         {
 
-            //  BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
+             BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
 
 
-            new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
-            new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
-            //普通99ns simd24ns
+            //new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
+          //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
+            //普通14ns simd11ns
 
 
 
@@ -124,6 +127,6 @@ namespace ConsoleApp35
             //int n = Parse(arr,out int e);
         }
     }
-   
- 
+
+
 }
