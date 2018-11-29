@@ -95,30 +95,21 @@ namespace ConsoleApp35
             var mask0 = Sse2.MoveMask(Sse2.CompareEqual(str, _0));
 
 
-         //uint n=32-   Lzcnt.LeadingZeroCount((uint)mask);
             int n = Popcnt.PopCount((uint)((~mask) & (mask - 1)));
-
-            //sjis対応版時
-            //if (n > 16) n = 16;
             if (n > 8) n = 8;
-         //   uint m = 32 - Lzcnt.LeadingZeroCount((uint)mask0);
-
-            int m = Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
-
+               int m = Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
+         
             if (m < n)
                 return -1;
 
             if (mask == 0)
             {
-                // sjis対応版時
-                //cnt += 16;
-                //c+=16;
                 cnt += 8;
                 c += 16;
                 goto start;
             }
 
-            return cnt + n;
+            return cnt +n;
         }
     }
 
@@ -131,10 +122,10 @@ namespace ConsoleApp35
         unsafe static void Main(string[] args)
         {
 
-      // BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
+      BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
 
 
-          new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
+         // new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
             //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
             //普通140ns simd11ns  i7 4210
             //普通135ns simd10ns  i5 7200
