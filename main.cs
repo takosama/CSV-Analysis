@@ -78,15 +78,14 @@ namespace ConsoleApp35
 
         Vector128<sbyte> maskMove0 = Sse2.SetVector128(-1, -1, -1, -1, -1, -1, -1, -1, 14, 12, 10, 8, 6, 4, 2, 0);
        
-        //sjis対応版?
-       // Vector128<sbyte> maskMove0 = Sse2.SetVector128(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1 ,0);
-
+    
         unsafe int GetControlIndexSIMD(sbyte* c)
         {
             int cnt = 0;
             start:
             var str = Sse2.LoadVector128(c);
 
+            //sjis対応版時はここをコメントアウト
             str = Ssse3.Shuffle(str, maskMove0);
 
             var position = Sse2.Or(Sse2.CompareEqual(str, _koron), Sse2.CompareEqual(str, _lf));
@@ -95,7 +94,11 @@ namespace ConsoleApp35
             var mask0 = Sse2.MoveMask(Sse2.CompareEqual(str, _0));
 
             int n = Popcnt.PopCount((uint)((~mask) & (mask - 1)));
+            
+            //sjis対応版時
+            //if (n > 16) n = 16;
             if (n > 8) n = 8;
+
             int m = Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
 
             if (m < n)
@@ -103,6 +106,9 @@ namespace ConsoleApp35
 
             if (mask == 0)
             {
+               // sjis対応版時
+               //cnt += 16;
+               //c+=16;
                 cnt += 8;
                 c += 8;
                 goto start;
