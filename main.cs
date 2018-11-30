@@ -7,10 +7,31 @@ namespace ConsoleApp35
 {
     public unsafe class MyStr
     {
+        Vector128<sbyte>[] maskArray = new Vector128<sbyte>[16];
+        public MyStr()
+        {
+            maskArray[15] = Sse2.SetVector128(-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[14] = Sse2.SetVector128(0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[13] = Sse2.SetVector128(0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[12] = Sse2.SetVector128(0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[11] = Sse2.SetVector128(0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[10] = Sse2.SetVector128(0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[09] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[08] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[07] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0);
+            maskArray[06] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0);
+            maskArray[05] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0);
+            maskArray[04] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0);
+            maskArray[03] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0);
+            maskArray[02] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0);
+            maskArray[01] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0);
+            maskArray[00] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1);
+        }
+
         volatile string str = "ああaaaa,123,1234,bbbbbbbbbbbbbbbbbbbasdaadsaf0010bbbbbbbbbbbbbbbbbbbbbasdaadsあｓｄｆｇｈｊｋｌ；af0010bb,0\r\naaaab,1234,12345,abbbb,1\n";
 
         //index が入るはずの配列
-        volatile int[] tmp = new int[100];
+        volatile int[] tmpArray = new int[100];
         //99
         [BenchmarkDotNet.Attributes.Benchmark]
         public void GetControlIndex()
@@ -24,7 +45,7 @@ namespace ConsoleApp35
                 if (cnt == -1)
                     break;
                 index += cnt;
-                tmp[i] = index;
+                tmpArray[i] = index;
                 i++;
                 index++;
             }
@@ -64,7 +85,7 @@ namespace ConsoleApp35
                     if (cnt == -1)
                         break;
                     index += cnt;
-                    tmp[i] = index;
+                    tmpArray[i] = index;
                     i++;
                     index++;
                 }
@@ -77,6 +98,7 @@ namespace ConsoleApp35
         Vector128<sbyte> _0 = Sse2.SetAllVector128((sbyte)'\0');
 
         Vector128<sbyte> maskMove0 = Sse2.SetVector128(-1, -1, -1, -1, -1, -1, -1, -1, 14, 12, 10, 8, 6, 4, 2, 0);
+        Vector128<sbyte> maskMove1 = Sse2.SetVector128(14, 12, 10, 8, 6, 4, 2, 0 ,- 1, -1, -1, -1, -1, -1, -1, -1);
 
 
         unsafe int GetControlIndexSIMD(sbyte* c)
@@ -111,6 +133,74 @@ namespace ConsoleApp35
 
             return cnt +n;
         }
+
+        [BenchmarkDotNet.Attributes.Benchmark]
+        public unsafe void GetPositionSIMD2()
+        {
+            var span = str.AsSpan();
+            fixed (char* p = &span.GetPinnableReference())
+            {
+                GetPositionSIMD2((sbyte*)p, 100);
+                //sizeof(char) * span.Length);
+            }
+        }
+
+
+        unsafe void GetPositionSIMD2(sbyte* p, int max)
+        {
+            int i = 0;
+            int cnt = 0;
+
+            start:
+            var tmp0 = Sse2.LoadVector128(p);
+            p += 16;
+            var tmp1 = Sse2.LoadVector128(p);
+            p += 16;
+            tmp0 = Ssse3.Shuffle(tmp0, maskMove0);
+            tmp1 = Ssse3.Shuffle(tmp1, maskMove1);
+
+            var tmp = Sse2.Or(tmp0, tmp1);
+
+            loop:
+
+
+            var cmp0 = Sse2.CompareEqual(tmp, _lf);
+            var cmp1 = Sse2.CompareEqual(tmp, _koron);
+            var cmpControl = Sse2.Add(cmp0, cmp1);
+            var maskControl = Sse2.MoveMask(cmpControl);
+
+            var cmpZ = Sse2.CompareEqual(tmp, _0);
+            var maskZero = Sse2.MoveMask(cmpZ);
+
+
+
+            var posControl = Popcnt.PopCount((uint)((~maskControl) & (maskControl - 1)));
+            var posZero = Popcnt.PopCount((uint)((~maskZero) & (maskZero - 1)));
+
+            if (posControl == 32)
+            {
+                cnt += 16;
+                if (max <= cnt * 2)
+                    return;
+                else
+                goto start;
+            }
+
+            if (posControl > posZero)
+            {
+                return;
+            }
+
+            tmpArray[i] = posControl + cnt;
+            i++;
+
+
+            tmp = Sse2.Or(tmp, maskArray[(int)posControl]);
+            goto loop;
+        }
+
+
+
     }
 
 
@@ -122,8 +212,8 @@ namespace ConsoleApp35
         unsafe static void Main(string[] args)
         {
 
-      BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
-
+         // BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
+            new MyStr().GetPositionSIMD2();
 
          // new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
             //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
@@ -132,7 +222,7 @@ namespace ConsoleApp35
 
 
 
-            Console.ReadLine();
+      //      Console.ReadLine();
             //int n = Parse(arr,out int e);
         }
     }
