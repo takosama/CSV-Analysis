@@ -9,26 +9,9 @@ namespace ConsoleApp35
 {
     public unsafe class MyStr
     {
-        Vector128<sbyte>[] maskArray = new Vector128<sbyte>[16];
-        public MyStr()
+         public MyStr()
         {
-            maskArray[15] = Sse2.SetVector128(-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[14] = Sse2.SetVector128(0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[13] = Sse2.SetVector128(0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[12] = Sse2.SetVector128(0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[11] = Sse2.SetVector128(0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[10] = Sse2.SetVector128(0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[09] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[08] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[07] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0);
-            maskArray[06] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0);
-            maskArray[05] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0);
-            maskArray[04] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0);
-            maskArray[03] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0);
-            maskArray[02] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0);
-            maskArray[01] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0);
-            maskArray[00] = Sse2.SetVector128(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1);
-        }
+             }
 
         volatile string str = "ああaaaa,123,1234,bbbbbbbbbbbbbbbbbbbasdaadsaf0010bbbbbbbbbbbbbbbbbbbbbasdaadsあｓｄｆｇｈｊｋｌ；af0010bb,0\r\naaaab,1234,12345,abbbb,1\n";
 
@@ -145,6 +128,8 @@ namespace ConsoleApp35
             }
         }
 
+       
+
 
         unsafe void GetPositionSIMD2(sbyte* p, int max)
         {
@@ -169,6 +154,7 @@ namespace ConsoleApp35
 
             var maskControl = Sse2.MoveMask(cmpControl);
             var maskZero = Sse2.MoveMask(cmpZ);
+
 
             var posZero = Popcnt.PopCount((uint)((~maskZero) & (maskZero - 1)));
 
@@ -210,7 +196,8 @@ namespace ConsoleApp35
             // new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
             //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
             //普通140ns simd11ns  i7 4210
-            //普通135ns simd10ns  i5 7200
+            //普通135ns simd10ns  i5 
+
 
 
 
