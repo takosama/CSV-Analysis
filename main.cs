@@ -1,3 +1,5 @@
+
+
 using System;
 using System.Runtime.Intrinsics.X86;
 using System.Runtime.Intrinsics;
@@ -78,10 +80,10 @@ namespace ConsoleApp35
             {
                 int index = 0;
                 int i = 0;
-                sbyte* pp =(sbyte*) p;
+                sbyte* pp = (sbyte*)p;
                 while (true)
                 {
-                    int cnt = GetControlIndexSIMD(pp + index*2);
+                    int cnt = GetControlIndexSIMD(pp + index * 2);
                     if (cnt == -1)
                         break;
                     index += cnt;
@@ -98,7 +100,7 @@ namespace ConsoleApp35
         Vector128<sbyte> _0 = Sse2.SetAllVector128((sbyte)'\0');
 
         Vector128<sbyte> maskMove0 = Sse2.SetVector128(-1, -1, -1, -1, -1, -1, -1, -1, 14, 12, 10, 8, 6, 4, 2, 0);
-        Vector128<sbyte> maskMove1 = Sse2.SetVector128(14, 12, 10, 8, 6, 4, 2, 0 ,- 1, -1, -1, -1, -1, -1, -1, -1);
+        Vector128<sbyte> maskMove1 = Sse2.SetVector128(14, 12, 10, 8, 6, 4, 2, 0, -1, -1, -1, -1, -1, -1, -1, -1);
 
 
         unsafe int GetControlIndexSIMD(sbyte* c)
@@ -107,8 +109,7 @@ namespace ConsoleApp35
             start:
             var str = Sse2.LoadVector128(c);
 
-
-            //sjis対応版時はここをコメントアウト
+             
             str = Ssse3.Shuffle(str, maskMove0);
 
             var position = Sse2.Or(Sse2.CompareEqual(str, _koron), Sse2.CompareEqual(str, _lf));
@@ -119,8 +120,8 @@ namespace ConsoleApp35
 
             int n = Popcnt.PopCount((uint)((~mask) & (mask - 1)));
             if (n > 8) n = 8;
-               int m = Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
-         
+            int m = Popcnt.PopCount((uint)((~mask0) & (mask0 - 1)));
+
             if (m < n)
                 return -1;
 
@@ -131,7 +132,7 @@ namespace ConsoleApp35
                 goto start;
             }
 
-            return cnt +n;
+            return cnt + n;
         }
 
         [BenchmarkDotNet.Attributes.Benchmark]
@@ -140,8 +141,7 @@ namespace ConsoleApp35
             var span = str.AsSpan();
             fixed (char* p = &span.GetPinnableReference())
             {
-                GetPositionSIMD2((sbyte*)p, 100);
-                //sizeof(char) * span.Length);
+                 GetPositionSIMD2((sbyte*)p, sizeof(char) * span.Length);
             }
         }
 
@@ -156,51 +156,43 @@ namespace ConsoleApp35
             p += 16;
             var tmp1 = Sse2.LoadVector128(p);
             p += 16;
+        
             tmp0 = Ssse3.Shuffle(tmp0, maskMove0);
             tmp1 = Ssse3.Shuffle(tmp1, maskMove1);
 
-            var tmp = Sse2.Or(tmp0, tmp1);
-
-            loop:
-
-
+            var tmp = Sse2.Add(tmp0, tmp1);
+          
             var cmp0 = Sse2.CompareEqual(tmp, _lf);
             var cmp1 = Sse2.CompareEqual(tmp, _koron);
             var cmpControl = Sse2.Add(cmp0, cmp1);
-            var maskControl = Sse2.MoveMask(cmpControl);
-
             var cmpZ = Sse2.CompareEqual(tmp, _0);
+
+            var maskControl = Sse2.MoveMask(cmpControl);
             var maskZero = Sse2.MoveMask(cmpZ);
 
-
-
-            var posControl = Popcnt.PopCount((uint)((~maskControl) & (maskControl - 1)));
             var posZero = Popcnt.PopCount((uint)((~maskZero) & (maskZero - 1)));
+
+            loop:
+            var posControl = Popcnt.PopCount((uint)((~maskControl) & (maskControl - 1)));
 
             if (posControl == 32)
             {
                 cnt += 16;
-                if (max <= cnt * 2)
+                if (max <= cnt*2)
                     return;
                 else
-                goto start;
+                    goto start;
             }
 
             if (posControl > posZero)
-            {
                 return;
-            }
 
             tmpArray[i] = posControl + cnt;
             i++;
 
-
-            tmp = Sse2.Or(tmp, maskArray[(int)posControl]);
+            maskControl &= ~(1 << (posControl));
             goto loop;
         }
-
-
-
     }
 
 
@@ -212,17 +204,17 @@ namespace ConsoleApp35
         unsafe static void Main(string[] args)
         {
 
-         // BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
-            new MyStr().GetPositionSIMD2();
+          // BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
+           new MyStr().GetPositionSIMD2();
 
-         // new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
+            // new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
             //  new MyStr().GetControlIndex();//.と\nの位置を解析する(普通)
             //普通140ns simd11ns  i7 4210
             //普通135ns simd10ns  i5 7200
 
 
 
-      //      Console.ReadLine();
+            //      Console.ReadLine();
             //int n = Parse(arr,out int e);
         }
     }
