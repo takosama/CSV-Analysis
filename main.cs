@@ -128,7 +128,7 @@ namespace ConsoleApp35
             }
         }
 
-       
+
 
 
         unsafe void GetPositionSIMD2(sbyte* p, int max)
@@ -141,12 +141,12 @@ namespace ConsoleApp35
             p += 16;
             var tmp1 = Sse2.LoadVector128(p);
             p += 16;
-        
+
             tmp0 = Ssse3.Shuffle(tmp0, maskMove0);
             tmp1 = Ssse3.Shuffle(tmp1, maskMove1);
 
             var tmp = Sse2.Add(tmp0, tmp1);
-          
+
             var cmp0 = Sse2.CompareEqual(tmp, _lf);
             var cmp1 = Sse2.CompareEqual(tmp, _koron);
             var cmpControl = Sse2.Add(cmp0, cmp1);
@@ -161,23 +161,28 @@ namespace ConsoleApp35
             loop:
             var posControl = Popcnt.PopCount((uint)((~maskControl) & (maskControl - 1)));
 
-            if (posControl == 32)
+            if (posControl >= 32)
             {
                 cnt += 16;
-                if (max <= cnt*2)
+                if (max <= cnt * 2)
                     return;
                 else
                     goto start;
             }
+            else
+            {
 
-            if (posControl > posZero)
-                return;
+                if (posControl > posZero)
+                    return;
+                else
+                {
+                    tmpArray[i] = posControl + cnt;
+                    i++;
 
-            tmpArray[i] = posControl + cnt;
-            i++;
-
-            maskControl &= ~(1 << (posControl));
-            goto loop;
+                    maskControl &= ~(1 << (posControl));
+                    goto loop;
+                }
+            }
         }
     }
 
@@ -190,7 +195,7 @@ namespace ConsoleApp35
         unsafe static void Main(string[] args)
         {
 
-          // BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
+          BenchmarkDotNet.Running.BenchmarkRunner.Run<MyStr>();
            new MyStr().GetPositionSIMD2();
 
             // new MyStr().GetControlIndexSIMD();//.と\nの位置を解析する(simd)
